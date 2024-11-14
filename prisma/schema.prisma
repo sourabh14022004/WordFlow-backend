@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  username        String    @unique
+  email           String    @unique
+  passwordHash    String
+  bio            String?
+  profilePicture String?
+  isVerified     Boolean   @default(false)
+  verifyToken    String?
+  resetToken     String?
+  resetTokenExp  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  articles       Article[]
+  comments       Comment[]
+  likes          Like[]
+
+  @@map("users")
+}
+
+model Article {
+  id            String    @id @default(uuid())
+  title         String
+  content       String    @db.Text
+  featuredImage String?
+  published     Boolean   @default(true)
+  viewCount     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  likes         Like[]
+  tags          Tag[]
+
+  @@map("articles")
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  articleId   String
+  article     Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Like {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now())
+
+  articleId   String
+  article     Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@map("likes")
+}
+
+model Tag {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  articles    Article[]
+
+  @@map("tags")
+}
